@@ -170,24 +170,23 @@ rules.casePatternBracketExpression = function (concatenation, pipe) {
 }
 
 rules.caseBody = function (statementList, control) {
-  control = control || ''
-  control = ';' + control
-  control = control.replace(/;{2,}/g,';;')
-
+  control = control || ';';
   return {
     control: control,
     value: statementList
   }
-}
+};
 
 rules.caseStatement = function (statement, control) {
-  statement.control = control || ';'
-  return statement
-}
+  statement.control = control || ';';
+  return statement;
+};
 
-rules.caseControlOperator = function (op) {
-  return op
+function extractControlOperator(op) {
+  return op;
 }
+rules.caseControlOperator = extractControlOperator;
+rules.caseInnerControlOperator = extractControlOperator;
 
 rules.elifBlock = function (test, body) {
   return {

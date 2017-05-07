@@ -3,7 +3,7 @@ var parse = require('../parser');
 
 describe("case condition - simple", function () {
   it("parses a body with multiple statements in it", function (done) {
-    expect(parse('case foo in * ) lol; more_lol; esac')[0]).to.deep.equal(
+    expect(parse('case foo in * ) lol; more_lol; foo) another;; esac')[0]).to.deep.equal(
       {
         type: 'case',
         selection: {
@@ -39,6 +39,32 @@ describe("case condition - simple", function () {
                   "command": {
                     "type": "literal",
                     "value": "more_lol"
+                  },
+                  "args": [],
+                  "redirects": [],
+                  "env": {},
+                  "control": ";",
+                  "next": null
+                }
+              ]
+            }
+          },
+          {
+            type: 'caseOption',
+            patternList: [
+              {
+                type: 'literal',
+                value: 'foo'
+              }
+            ],
+            body: {
+              control: ';;',
+              value: [
+                {
+                  "type": "command",
+                  "command": {
+                    "type": "literal",
+                    "value": "another"
                   },
                   "args": [],
                   "redirects": [],

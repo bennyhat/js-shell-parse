@@ -14,9 +14,6 @@ statementList
    tail:(controlOperator spaceNL* statement)*
    space* last:controlOperator? spaceNL*
 
-controlOperator
- = space* op:('&' / ';' / '\n')
-
 statement
  = statement:( subshell
              / bashExtensions
@@ -138,7 +135,24 @@ caseBody "a case body"
  = statementList:caseStatement+ control:caseControlOperator?
 
 caseStatement
- = spaceNL* statement:statement control:controlOperator
+ = spaceNL* statement:statement control:caseInnerControlOperator
+
+controlCharacters
+ = '&' / ';' / '\n'
+
+caseControlCharacters
+ = ';;&' / ';;' / ';&' // ; is not strictly case control
+
+controlOperator
+ = space* op:controlCharacters
+
+caseControlOperator
+ = space* op:caseControlCharacters
+
+// will either see case control and bail (successfully with no match) - defaults inner to ';'
+//  or pick up any regular control characters - if ';' it will steal from and default outer to ';'
+caseInnerControlOperator
+ = space* op:(&caseControlCharacters / controlCharacters)
 
 commonConcatenation
  = environmentVariable
@@ -228,10 +242,6 @@ backQuoteChar
 
 processSubstitution
  = rw:[<>] '(' commands:statementList ')'
-
-
-caseControlOperator
- = space* op:(';;&' / ';;' / ';&' / ';' / '&' )
 
 keyword
  = ( "while"
