@@ -1,10 +1,21 @@
 script
  = spaceNL* statements:statementList?
 
+space "whitespace"
+ = " " / "\t"
+
+spaceNL = space / "\n" / comment
+
+comment "a comment"
+  = '#' [^\n]* ("\n" / EOF)
+
 statementList
  = head:statement
    tail:(controlOperator spaceNL* statement)*
    space* last:controlOperator? spaceNL*
+
+controlOperator
+ = space* op:('&' / ';' / '\n')
 
 statement
  = statement:( subshell
@@ -18,11 +29,11 @@ statement
              )
    next:(space* chainedStatement)?
 
-chainedStatement
- = operator:('&&' / '||') spaceNL* statement:statement
-
 subshell "a subshell"
  = "(" space* statements:statementList  space* ")"
+
+bashExtensions
+ = time / declare
 
 command "a single command"
  = pre:((variableAssignment / redirect) space+)*
@@ -30,8 +41,8 @@ command "a single command"
    post:(space+ (redirect / argument))*
    pipe:(space* pipe)?
 
-condition
- = test:script
+variableAssignment "a variable assignment"
+ = name:writableVariableName '=' value:argument?
 
 ifBlock "an if/elif/else statement"
  = "if" spaceNL+ test:condition
@@ -40,10 +51,76 @@ ifBlock "an if/elif/else statement"
    elseBody:("else" script)?
    "fi"
 
+conditionalLoop "a while/until loop"
+= kind:("while" / "until") spaceNL+ test:condition
+  "do" spaceNL+ body:script
+  "done"
+
+forLoop "a for loop"
+ = "for" space+ loopVar:writableVariableName spaceNL+
+   subjects:("in" (space+ argument)*)?
+   space* (";" / "\n") spaceNL*
+   "do" spaceNL+
+   body:statementList spaceNL*
+   "done"
+
 caseBlock "a case block"
  = "case" space+ selection:concatenation spaceNL+
    "in" spaceNL+ optionList:caseOption+
    "esac"
+
+chainedStatement
+ = operator:('&&' / '||') spaceNL* statement:statement
+
+time "time builtin"
+ = "time" space+ flags:("-" [a-z]+ space+)* statements:statementList
+
+declare "declare builtin"
+ = ("declare" / "typeset") command:[^\n]+ (";" / "\n")
+
+redirect
+ = moveFd / duplicateFd / redirectFd
+
+moveFd
+ = fd:fd? op:('<&' / '>&') dest:fd '-'
+
+duplicateFd
+ = src:fd? op:('<&' / '>&') space* dest:fd
+
+redirectFd
+ = fd:fd? op:redirectionOperator space* filename:argument
+
+redirectionOperator
+ = '>|' / '>>' / '&>>' / '&>' / '<' / '>'
+
+fd
+ = digits:[0-9]+ { return parseInt(join(digits), 10) }
+
+commandName "command name"
+ = !redirect
+   !keyword
+   !variableAssignment
+   name:(concatenation / builtinCommandName)
+
+builtinCommandName
+ = '[[' / '['
+
+argument "command argument"
+ = commandName
+ / processSubstitution
+
+pipe =
+ "|" spaceNL* command:command
+
+writableVariableName = [a-zA-Z0-9_]+
+
+readableVariableName = writableVariableName / '?'  /* todo, other special vars */
+
+condition
+ = test:script
+
+elifBlock
+ = "elif" spaceNL+ test:condition "then" spaceNL+ body:script
 
 caseOption "a case option"
  = "("? patternList:casePattern+ space* ")" body:caseBody spaceNL*
@@ -62,47 +139,6 @@ caseBody "a case body"
 
 caseStatement
  = spaceNL* statement:statement control:controlOperator
-
-elifBlock
- = "elif" spaceNL+ test:condition "then" spaceNL+ body:script
-
-conditionalLoop "a while/until loop"
- = kind:("while" / "until") spaceNL+ test:condition
-   "do" spaceNL+ body:script
-   "done"
-
-forLoop "a for loop"
- = "for" space+ loopVar:writableVariableName spaceNL+
-   subjects:("in" (space+ argument)*)?
-   space* (";" / "\n") spaceNL*
-   "do" spaceNL+
-   body:statementList spaceNL*
-   "done"
-
-bashExtensions
- = time / declare
-
-time "time builtin"
- = "time" space+ flags:("-" [a-z]+ space+)* statements:statementList
-
-declare "declare builtin"
- = ("declare" / "typeset") command:[^\n]+ (";" / "\n")
-
-variableAssignment "a variable assignment"
- = name:writableVariableName '=' value:argument?
-
-commandName "command name"
- = !redirect
-   !keyword
-   !variableAssignment
-   name:(concatenation / builtinCommandName)
-
-builtinCommandName
- = '[[' / '['
-
-argument "command argument"
- = commandName
- / processSubstitution
 
 concatenation "concatenation of strings and/or variables"
  = pieces:( glob
@@ -153,9 +189,6 @@ expandsInQuotes
 
 environmentVariable = '$' name:readableVariableName
 
-writableVariableName = [a-zA-Z0-9_]+
-readableVariableName = writableVariableName / '?'  /* todo, other special vars */
-
 variableSubstitution = '${' expr:[^}]* '}'
 
 commandSubstitution
@@ -175,40 +208,9 @@ backQuoteChar
 processSubstitution
  = rw:[<>] '(' commands:statementList ')'
 
-redirect
- = moveFd / duplicateFd / redirectFd
-
-moveFd
- = fd:fd? op:('<&' / '>&') dest:fd '-'
-
-duplicateFd
- = src:fd? op:('<&' / '>&') space* dest:fd
-
-redirectFd
- = fd:fd? op:redirectionOperator space* filename:argument
-
-redirectionOperator
- = '>|' / '>>' / '&>>' / '&>' / '<' / '>'
-
-fd
- = digits:[0-9]+ { return parseInt(join(digits), 10) }
-
-controlOperator
- = space* op:('&' / ';' / '\n')
 
 caseControlOperator
  = space* op:(';;&' / ';;' / ';&' / ';' / '&' )
-
-pipe =
- "|" spaceNL* command:command
-
-space "whitespace"
- = " " / "\t"
-
-spaceNL = space / "\n" / comment
-
-comment "a comment"
-  = '#' [^\n]* ("\n" / EOF)
 
 keyword
  = ( "while"
