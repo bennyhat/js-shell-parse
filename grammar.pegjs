@@ -166,7 +166,7 @@ caseBarewordChar
 = '\\' chr:caseBarewordMeta { return chr }
 / !caseBarewordMeta chr:.   { return chr }
 
-caseBarewordMeta = [$"';&<>\n()\[\]*?|` ]
+caseBarewordMeta = [$"';&<>\n()\[\]*?` ]
 
 caseGlob
  = caseBareword* ('*' / '?' / characterRange / braceExpansion)+ caseBareword*

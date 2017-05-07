@@ -293,4 +293,52 @@ describe("case condition - complex", () => {
     );
     done();
   });
+  it("parses and excuses internal pipes on bracket expressions", (done) => {
+    expect(parse('case foo in [a|A]) echo foo;& esac')[0]).to.deep.equal(
+      {
+        type: 'case',
+        selection: {
+          type: 'literal',
+          value: 'foo'
+        },
+        optionList: [{
+          type: 'caseOption',
+          patternList: [
+            {
+              type: 'bracketExpression',
+              value: {
+                "type": "literal",
+                "value": "a|A"
+              }
+            }
+          ],
+          body: {
+            control: ';&',
+            value: [
+              {
+                type: 'command',
+                command: {
+                  type: 'literal',
+                  value: 'echo'
+                },
+                args: [
+                  {
+                    type: 'literal',
+                    value: 'foo'
+                  }
+                ],
+                redirects: [],
+                env: {},
+                control: ';',
+                next: null
+              },
+            ]
+          }
+        }],
+        control: ';',
+        next: null
+      }
+    );
+    done();
+  });
 });
