@@ -41,12 +41,12 @@ ifBlock "an if/elif/else statement"
    "fi"
 
 caseBlock "a case block"
- = "case" space+ selection:concatenation space+
+ = "case" space+ selection:concatenation spaceNL+
    "in" spaceNL+ optionList:caseOption+
    "esac"
 
 caseOption "a case option"
- = "("? patternList:casePattern+ space* ")" body:caseBody+ spaceNL*
+ = "("? patternList:casePattern+ space* ")" body:caseBody spaceNL*
 
 casePattern "a case pattern"
  = casePatternExpression / casePatternBracketExpression
@@ -58,7 +58,10 @@ casePatternBracketExpression
  = "["? concatenation:concatenation space? pipe:"|"? space?
 
 caseBody "a case body"
- = (spaceNL* statement:statement controlOperator)
+ = statementList:caseStatement+ control:caseControlOperator?
+
+caseStatement
+ = spaceNL* statement:statement control:controlOperator
 
 elifBlock
  = "elif" spaceNL+ test:condition "then" spaceNL+ body:script
@@ -191,7 +194,10 @@ fd
  = digits:[0-9]+ { return parseInt(join(digits), 10) }
 
 controlOperator
- = space* op:('&' / ';;' / ';' / '\n')
+ = space* op:('&' / ';' / '\n')
+
+caseControlOperator
+ = space* op:(';;&' / ';;' / ';&' / ';' / '&' )
 
 pipe =
  "|" spaceNL* command:command

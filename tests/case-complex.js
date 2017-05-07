@@ -22,20 +22,23 @@ test('case clauses - complex', function (t) {
             value: 'd'
           }
         ],
-        body: [
-          {
-            "type": "command",
-            "command": {
-              "type": "literal",
-              "value": "more_stuff"
-            },
-            "args": [],
-            "redirects": [],
-            "env": {},
-            "control": ";",
-            "next": null
-          }
-        ]
+        body: {
+          control: ';;',
+          value: [
+            {
+              "type": "command",
+              "command": {
+                "type": "literal",
+                "value": "more_stuff"
+              },
+              "args": [],
+              "redirects": [],
+              "env": {},
+              "control": ";",
+              "next": null
+            }
+          ]
+        }
       },
       {
         type: 'caseOption',
@@ -63,26 +66,122 @@ test('case clauses - complex', function (t) {
             }
           }
         ],
-        body: [
+        body: {
+          control: ';',
+          value: [
+            {
+              "type": "command",
+              "command": {
+                "type": "literal",
+                "value": "bracket_expression"
+              },
+              "args": [],
+              "redirects": [],
+              "env": {},
+              "control": ";",
+              "next": null
+            }
+          ]
+        }
+      },
+      {
+        type: 'caseOption',
+        patternList: [
           {
-            "type": "command",
-            "command": {
-              "type": "literal",
-              "value": "bracket_expression"
-            },
-            "args": [],
-            "redirects": [],
-            "env": {},
-            "control": ";",
-            "next": null
+            type: 'glob',
+            value: '*'
           }
-        ]
+        ],
+        body: {
+          control: ';;',
+          value: [
+            {
+              type: 'command',
+              command: {
+                type: 'literal',
+                value: 'echo'
+              },
+              args: [
+                {
+                  type: 'literal',
+                  value: 'bar'
+                }
+              ],
+              redirects: [],
+              env: {},
+              control: '&',
+              next: null
+            },
+          ]
+        }
+      },
+      {
+        type: 'caseOption',
+        patternList: [
+          {
+            type: 'glob',
+            value: '*'
+          }
+        ],
+        body: {
+          control: ';;&',
+          value: [
+            {
+              type: 'command',
+              command: {
+                type: 'literal',
+                value: 'echo'
+              },
+              args: [
+                {
+                  type: 'literal',
+                  value: 'baz'
+                }
+              ],
+              redirects: [],
+              env: {},
+              control: ';',
+              next: null
+            },
+          ]
+        }
+      },
+      {
+        type: 'caseOption',
+        patternList: [
+          {
+            type: 'glob',
+            value: '*'
+          }
+        ],
+        body: {
+          control: ';&',
+          value: [
+            {
+              type: 'command',
+              command: {
+                type: 'literal',
+                value: 'echo'
+              },
+              args: [
+                {
+                  type: 'literal',
+                  value: 'foo'
+                }
+              ],
+              redirects: [],
+              env: {},
+              control: ';',
+              next: null
+            },
+          ]
+        }
       }],
     control: ';',
     next: null
   }
 
-  var actual = parse('case foo in c | d) more_stuff;; [yY] | [Nn][oO] ) bracket_expression; esac')[0]
+  var actual = parse('case foo in c | d) more_stuff;; [yY] | [Nn][oO] ) bracket_expression; * ) echo bar & ;; *) echo baz;;& * ) echo foo;& esac')[0]
 
   t.deepEqual(actual, expected)
   t.end()

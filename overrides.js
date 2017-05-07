@@ -142,7 +142,6 @@ rules.caseBlock = function (selection, optionList) {
 rules.caseOption = function (patternList, body) {
   var actualPatternList = []
   patternList.forEach(function (pattern, index) {
-
     actualPatternList.push(pattern)
     if (pattern !== '|' && pattern.containsPipe) {
       actualPatternList.push('|')
@@ -171,8 +170,24 @@ rules.casePatternBracketExpression = function (concatenation, pipe) {
   }
 }
 
-rules.caseBody = function (statement) {
+rules.caseBody = function (statementList, control) {
+  control = control || ''
+  control = ';' + control
+  control = control.replace(/;{2,}/g,';;')
+
+  return {
+    control: control,
+    value: statementList
+  }
+}
+
+rules.caseStatement = function (statement, control) {
+  statement.control = control || ';'
   return statement
+}
+
+rules.caseControlOperator = function (op) {
+  return op
 }
 
 rules.elifBlock = function (test, body) {
