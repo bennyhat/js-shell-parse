@@ -131,6 +131,50 @@ rules.ifBlock = function (test, body, elifBlocks, elseBody) {
   }
 }
 
+rules.caseBlock = function (selection, optionList) {
+  return {
+    type: 'case',
+    selection: selection,
+    optionList: optionList,
+  }
+}
+
+rules.caseOption = function (patternList, body) {
+  var actualPatternList = []
+  patternList.forEach(function (pattern, index) {
+
+    actualPatternList.push(pattern)
+    if (pattern !== '|' && pattern.containsPipe) {
+      actualPatternList.push('|')
+    }
+    delete pattern.containsPipe
+  })
+
+  return {
+    type: 'caseOption',
+    patternList: actualPatternList,
+    body: body,
+  }
+}
+
+rules.casePatternExpression = function (concatenation, pipe) {
+  concatenation.containsPipe = (pipe !== null)
+  return concatenation
+}
+
+rules.casePatternBracketExpression = function (concatenation, pipe) {
+  concatenation.value = concatenation.value.replace(/([^\\])]/g,'$1')
+  return {
+    type: 'bracketExpression',
+    value: concatenation,
+    containsPipe: (pipe !== null),
+  }
+}
+
+rules.caseBody = function (statement) {
+  return statement
+}
+
 rules.elifBlock = function (test, body) {
   return {
     type: 'ifElse',

@@ -14,6 +14,7 @@ statement
              / ifBlock
              / conditionalLoop
              / forLoop
+             / caseBlock
              )
    next:(space* chainedStatement)?
 
@@ -38,6 +39,26 @@ ifBlock "an if/elif/else statement"
    elifBlocks:elifBlock*
    elseBody:("else" script)?
    "fi"
+
+caseBlock "a case block"
+ = "case" space+ selection:concatenation space+
+   "in" spaceNL+ optionList:caseOption+
+   "esac"
+
+caseOption "a case option"
+ = "("? patternList:casePattern+ space* ")" body:caseBody+ spaceNL*
+
+casePattern "a case pattern"
+ = casePatternExpression / casePatternBracketExpression
+
+casePatternExpression
+ = concatenation:concatenation space? pipe:"|"? space?
+
+casePatternBracketExpression
+ = "["? concatenation:concatenation space? pipe:"|"? space?
+
+caseBody "a case body"
+ = (spaceNL* statement:statement controlOperator)
 
 elifBlock
  = "elif" spaceNL+ test:condition "then" spaceNL+ body:script
@@ -170,7 +191,7 @@ fd
  = digits:[0-9]+ { return parseInt(join(digits), 10) }
 
 controlOperator
- = space* op:('&' / ';' / '\n')
+ = space* op:('&' / ';;' / ';' / '\n')
 
 pipe =
  "|" spaceNL* command:command
