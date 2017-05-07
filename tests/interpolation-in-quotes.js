@@ -1,71 +1,81 @@
-var test = require('tape')
-var parse = require('../parser')
+var expect = require('chai').expect;
+var parse = require('../parser');
 
-test('interpolation in quotes', function (t) {
-
-  var arg = parse('"interpolated $variable"', 'argument')
-  t.deepEqual(arg, {
-    type: 'concatenation',
-    pieces: [
-      { type: "literal", value: "interpolated " },
-      { type: "variable", name: "variable" }
-    ]
-  }, "Can interpolate environment variables")
-
-  var arg = parse('"interpolated ${variable/sub/rep}"', 'argument')
-  t.deepEqual(arg, {
-    type: 'concatenation',
-    pieces: [
-      { type: "literal", value: "interpolated " },
-      { type: "variableSubstitution", expression: "variable/sub/rep" }
-    ]
-  }, "Can interpolate variables substitutions")
-
-  var arg = parse('"interpolated `backtick command`"', 'argument')
-  t.deepEqual(arg, {
-    type: 'concatenation',
-    pieces: [
-      { type: "literal", value:"interpolated " },
-      { type: "commandSubstitution",
-        commands: [
-          { type: 'command',
-            command: { type: 'literal', value: 'backtick' },
-            args: [
-              {type: 'literal', value: 'command'}
-            ],
-            redirects: [],
-            env: {},
-            control: ';',
-            next: null }
+describe("interpolation in quotes", () => {
+  it("parses and interpolates variables", (done) => {
+    expect(parse('"interpolated $variable"', 'argument')).to.deep.equal(
+      {
+        type: 'concatenation',
+        pieces: [
+          {type: "literal", value: "interpolated "},
+          {type: "variable", name: "variable"}
         ]
       }
-    ]
-  }, "Can interpolate backTicks (but you really shouldn't!)")
-
-  var arg = parse('"interpolated $(command1; command2)"', 'argument')
-  t.deepEqual(arg, {
-    type: 'concatenation',
-    pieces: [
-      { type: "literal", value:"interpolated " },
-      { type: "commandSubstitution",
-        commands: [
-          { type: 'command',
-            command: { type: 'literal', value: 'command1' },
-            args: [],
-            redirects: [],
-            env: {},
-            control: ';',
-            next: null },
-          { type: 'command',
-            command: { type: 'literal', value: 'command2' },
-            args: [],
-            redirects: [],
-            env: {},
-            control: ';',
-            next: null }
+    );
+    done();
+  });
+  it("parses and interpolates variable substitutions", (done) => {
+    expect(parse('"interpolated ${variable/sub/rep}"', 'argument')).to.deep.equal(
+      {
+        type: 'concatenation',
+        pieces: [
+          { type: "literal", value: "interpolated " },
+          { type: "variableSubstitution", expression: "variable/sub/rep" }
         ]
-      }]
-    }, "Can interpolate commands with $() (better idea!)")
-
-  t.end()
-})
+      }
+    );
+    done();
+  });
+  it("parses and interpolates back-ticks", (done) => {
+    expect(parse('"interpolated `backtick command`"', 'argument')).to.deep.equal(
+      {
+        type: 'concatenation',
+        pieces: [
+          { type: "literal", value:"interpolated " },
+          { type: "commandSubstitution",
+            commands: [
+              { type: 'command',
+                command: { type: 'literal', value: 'backtick' },
+                args: [
+                  {type: 'literal', value: 'command'}
+                ],
+                redirects: [],
+                env: {},
+                control: ';',
+                next: null }
+            ]
+          }
+        ]
+      }
+    );
+    done();
+  });
+  it("parses and interpolates sub-shell output", (done) => {
+    expect(parse('"interpolated $(command1; command2)"', 'argument')).to.deep.equal(
+      {
+        type: 'concatenation',
+        pieces: [
+          { type: "literal", value:"interpolated " },
+          { type: "commandSubstitution",
+            commands: [
+              { type: 'command',
+                command: { type: 'literal', value: 'command1' },
+                args: [],
+                redirects: [],
+                env: {},
+                control: ';',
+                next: null },
+              { type: 'command',
+                command: { type: 'literal', value: 'command2' },
+                args: [],
+                redirects: [],
+                env: {},
+                control: ';',
+                next: null }
+            ]
+          }]
+      }
+    );
+    done();
+  });
+});

@@ -1,59 +1,56 @@
-var test = require('tape')
-var parse = require('../parser')
+var expect = require('chai').expect;
+var parse = require('../parser');
 
-test('nesting backquotes', function (t) {
-  var arg = parse('`outer \\`middle \\\\\\`inner\\\\\\`\\``', 'argument')
-
-  var inner = {
-    type: "commandSubstitution",
-    commands: [
+describe("nested back-ticks", () => {
+  it("parses and nests back-ticks (not recommended)", (done) => {
+    expect(parse('`outer \\`middle \\\\\\`inner\\\\\\`\\``', 'argument')).to.deep.equal(
       {
-        type: 'command',
-        command: {
-          type: 'literal',
-          value: 'inner'
-        },
-        args: [],
-        redirects: [],
-        env: {},
-        control: ';',
-        next: null
+        type: 'commandSubstitution',
+        commands: [
+          {
+            type: 'command',
+            command: {type: 'literal', value: 'outer'},
+            args: [{
+              type: "commandSubstitution",
+              commands: [
+                {
+                  type: 'command',
+                  command: {
+                    type: 'literal',
+                    value: 'middle'
+                  },
+                  args: [{
+                    type: "commandSubstitution",
+                    commands: [
+                      {
+                        type: 'command',
+                        command: {
+                          type: 'literal',
+                          value: 'inner'
+                        },
+                        args: [],
+                        redirects: [],
+                        env: {},
+                        control: ';',
+                        next: null
+                      }
+                    ]
+                  }],
+                  redirects: [],
+                  env: {},
+                  control: ';',
+                  next: null
+                }
+              ]
+            }],
+            redirects: [],
+            env: {},
+            control: ';',
+            next: null
+          }
+        ],
       }
-    ]
-  }
-
-  var middle = {
-    type: "commandSubstitution",
-    commands: [
-      {
-        type: 'command',
-        command: {
-          type: 'literal',
-          value: 'middle'
-        },
-        args: [inner],
-        redirects: [],
-        env: {},
-        control: ';',
-        next: null
-      }
-    ]
-  }
-
-  t.deepEqual(arg, {
-    type: 'commandSubstitution',
-    commands: [
-      {
-        type: 'command',
-        command: { type: 'literal', value: 'outer' },
-        args: [ middle ],
-        redirects: [],
-        env: {},
-        control: ';',
-        next: null
-      }
-    ],
-  }, "Can nest backquotes (but you really shouldn't!)")
-
-  t.end()
-})
+    );
+    done();
+  });
+});

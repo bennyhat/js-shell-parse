@@ -1,19 +1,30 @@
-var test = require('tape')
-var parse = require('../parser')
+var expect = require('chai').expect;
+var parse = require('../parser');
 
-test('condition builtins', function (t) {
-  t.deepEqual(parse('[ 0 ]')[0], {
-    type: 'command',
-    command: "[",
-    args: [
-      { type: 'literal', value: '0' },
-      { type: 'literal', value: ']' },
-    ],
-    redirects: [],
-    env: {},
-    control: ';',
-    next: null
-  })
-  t.end()
-})
+describe("condition built-ins", () => {
+  it("parses a condition into a command", (done) => {
+    expect(parse('[ 0 ]')[0]).to.deep.equal(
+      {
+        type: 'command',
+        command: "[",
+        args: [
+          {
+            type: 'literal',
+            value: '0'
+          },
+          {
+            type: 'literal',
+            value: ']'
+          },
+        ],
+        redirects: [],
+        env: {},
+        control: ';',
+        next: null
+      }
+    );
+    done();
+  });
+});
+
 

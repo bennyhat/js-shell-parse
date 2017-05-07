@@ -1,18 +1,23 @@
-var test = require('tape')
-var parse = require('../parser')
+var expect = require('chai').expect;
+var parse = require('../parser');
 
-test('escaping in quotes', function (t) {
-  var arg = parse('"An escaped double-quote: \\""', 'argument')
-  t.deepEqual(arg, {
-    type:"literal",
-    value:"An escaped double-quote: \""
-  }, "Can escape double-quotes")
-
-  var arg = parse('"An escaped \\$dollar sign"', 'argument')
-  t.deepEqual(arg, {
-    type:"literal",
-    value:"An escaped $dollar sign"
-  }, "Can escape dollar signs")
-
-  t.end()
-})
+describe("escaping in quotes", () => {
+  it("parses and escapes double-quotes", (done) => {
+    expect(parse('"An escaped double-quote: \\""', 'argument')).to.deep.equal(
+      {
+        type:"literal",
+        value:"An escaped double-quote: \""
+      }
+    );
+    done();
+  });
+  it("parses and escapes $", (done) => {
+    expect(parse('"An escaped \\$dollar sign"', 'argument')).to.deep.equal(
+      {
+        type:"literal",
+        value:"An escaped $dollar sign"
+      }
+    );
+    done();
+  });
+});

@@ -1,25 +1,32 @@
-var test = require('tape')
-var parse = require('../parser')
+var expect = require('chai').expect;
+var parse = require('../parser');
 
-test('comments', function (t) {
-  t.deepEqual(parse('a="b" # very important! do not touch'), [{
-    type: 'variableAssignment',
-    name: 'a',
-    value: { type: 'literal', value: 'b' },
-    control: ';',
-    next: null
-  }]);
-
-  t.deepEqual(parse([
-    '# leading with a comment also works',
-    'a=b'
-  ].join('\n')), [{
-    type: 'variableAssignment',
-    name: 'a',
-    value: { type: 'literal', value: 'b' },
-    control: ';',
-    next: null
-  }]);
-
-  t.end()
-})
+describe("comments", () => {
+  it("parses and ignores inline comments", (done) => {
+    expect(parse('a="b" # very important! do not touch')[0]).to.deep.equal(
+      {
+        type: 'variableAssignment',
+        name: 'a',
+        value: {type: 'literal', value: 'b'},
+        control: ';',
+        next: null
+      }
+    );
+    done();
+  });
+  it("parses and ignores other comments", (done) => {
+    expect(parse(`
+        # leading with a comment also works
+        a=b
+      `)[0]).to.deep.equal(
+      {
+        type: 'variableAssignment',
+        name: 'a',
+        value: {type: 'literal', value: 'b'},
+        control: ';',
+        next: null
+      }
+    );
+    done();
+  });
+});

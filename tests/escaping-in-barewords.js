@@ -1,30 +1,41 @@
-var test = require('tape')
-var parse = require('../parser')
+var expect = require('chai').expect;
+var parse = require('../parser');
 
-test('escaping meta characters in barewords', function (t) {
-  var arg = parse('I\\ am\\ one\\ arg', 'argument')
-  t.deepEqual(arg, {
-    type: 'literal',
-    value: 'I am one arg'
-  }, "Can escape spaces")
-
-  var arg = parse('\\$dollar_dollar_bill', 'argument')
-  t.deepEqual(arg, {
-    type: 'literal',
-    value: '$dollar_dollar_bill'
-  }, "Can escape $")
-
-  var arg = parse('\\>\\ no\\ redirect', 'argument')
-  t.deepEqual(arg, {
-    type: 'literal',
-    value: '> no redirect'
-  }, "Can escape >")
-
-  var arg = parse('dollar_\\$dollar_bill', 'argument')
-  t.deepEqual(arg, {
-    type: 'literal',
-    value: 'dollar_$dollar_bill'
-  }, "Can escape mid-word")
-
-  t.end()
-})
+describe("escaping meta characters in barewords", () => {
+  it("parses and escapes spaces", (done) => {
+    expect(parse('I\\ am\\ one\\ arg', 'argument')).to.deep.equal(
+      {
+        type: 'literal',
+        value: 'I am one arg'
+      }
+    );
+    done();
+  });
+  it("parses and escapes $", (done) => {
+    expect(parse('\\$dollar_dollar_bill', 'argument')).to.deep.equal(
+      {
+        type: 'literal',
+        value: '$dollar_dollar_bill'
+      }
+    );
+    done();
+  });
+  it("parses and escapes >", (done) => {
+    expect(parse('\\>\\ no\\ redirect', 'argument')).to.deep.equal(
+      {
+        type: 'literal',
+        value: '> no redirect'
+      }
+    );
+    done();
+  });
+  it("parses and escapes mid-word", (done) => {
+    expect(parse('dollar_\\$dollar_bill', 'argument')).to.deep.equal(
+      {
+        type: 'literal',
+        value: 'dollar_$dollar_bill'
+      }
+    );
+    done();
+  });
+});

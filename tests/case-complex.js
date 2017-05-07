@@ -1,189 +1,244 @@
-var test = require('tape')
-var parse = require('../parser')
+var expect = require('chai').expect;
+var parse = require('../parser');
 
-test('case clauses - complex', function (t) {
-  var expected = {
-    type: 'case',
-    selection: {
-      type: 'literal',
-      value: 'foo'
-    },
-    optionList: [
+describe("case condition - complex", () => {
+  it("parses a patterns with ORs in them", (done) => {
+    expect(parse('case foo in c | d) more_stuff;; esac')[0]).to.deep.equal(
       {
-        type: 'caseOption',
-        patternList: [
+        type: 'case',
+        selection: {
+          type: 'literal',
+          value: 'foo'
+        },
+        optionList: [
           {
-            type: 'literal',
-            value: 'c'
-          },
-          '|',
-          {
-            type: 'literal',
-            value: 'd'
-          }
-        ],
-        body: {
-          control: ';;',
-          value: [
+            type: 'caseOption',
+            patternList: [
+              {
+                type: 'literal',
+                value: 'c'
+              },
+              '|',
+              {
+                type: 'literal',
+                value: 'd'
+              }
+            ],
+            body: {
+              control: ';;',
+              value: [
+                {
+                  "type": "command",
+                  "command": {
+                    "type": "literal",
+                    "value": "more_stuff"
+                  },
+                  "args": [],
+                  "redirects": [],
+                  "env": {},
+                  "control": ";",
+                  "next": null
+                }
+              ]
+            }
+          }],
+        control: ';',
+        next: null
+      }
+    );
+    done();
+  });
+  it("parses a patterns with bracket expression in them", (done) => {
+    expect(parse('case foo in [yY] | [Nn][oO] ) bracket_expression; esac')[0]).to.deep.equal(
+      {
+        type: 'case',
+        selection: {
+          type: 'literal',
+          value: 'foo'
+        },
+        optionList: [{
+          type: 'caseOption',
+          patternList: [
             {
-              "type": "command",
-              "command": {
+              type: 'bracketExpression',
+              value: {
                 "type": "literal",
-                "value": "more_stuff"
-              },
-              "args": [],
-              "redirects": [],
-              "env": {},
-              "control": ";",
-              "next": null
-            }
-          ]
-        }
-      },
-      {
-        type: 'caseOption',
-        patternList: [
-          {
-            type: 'bracketExpression',
-            value: {
-              "type": "literal",
-              "value": "yY"
-            }
-          },
-          '|',
-          {
-            type: 'bracketExpression',
-            value: {
-              "type": "literal",
-              "value": "Nn"
-            }
-          },
-          {
-            type: 'bracketExpression',
-            value: {
-              "type": "literal",
-              "value": "oO"
-            }
-          }
-        ],
-        body: {
-          control: ';',
-          value: [
+                "value": "yY"
+              }
+            },
+            '|',
             {
-              "type": "command",
-              "command": {
+              type: 'bracketExpression',
+              value: {
                 "type": "literal",
-                "value": "bracket_expression"
-              },
-              "args": [],
-              "redirects": [],
-              "env": {},
-              "control": ";",
-              "next": null
+                "value": "Nn"
+              }
+            },
+            {
+              type: 'bracketExpression',
+              value: {
+                "type": "literal",
+                "value": "oO"
+              }
             }
-          ]
-        }
-      },
-      {
-        type: 'caseOption',
-        patternList: [
-          {
-            type: 'glob',
-            value: '*'
+          ],
+          body: {
+            control: ';',
+            value: [
+              {
+                "type": "command",
+                "command": {
+                  "type": "literal",
+                  "value": "bracket_expression"
+                },
+                "args": [],
+                "redirects": [],
+                "env": {},
+                "control": ";",
+                "next": null
+              }
+            ]
           }
-        ],
-        body: {
-          control: ';;',
-          value: [
-            {
-              type: 'command',
-              command: {
-                type: 'literal',
-                value: 'echo'
-              },
-              args: [
-                {
-                  type: 'literal',
-                  value: 'bar'
-                }
-              ],
-              redirects: [],
-              env: {},
-              control: '&',
-              next: null
-            },
-          ]
-        }
-      },
+        }],
+        control: ';',
+        next: null
+      }
+    );
+    done();
+  });
+  it("parses a body with a non-; control character in it", (done) => {
+    expect(parse('case foo in * ) echo bar & ;; esac')[0]).to.deep.equal(
       {
-        type: 'caseOption',
-        patternList: [
-          {
-            type: 'glob',
-            value: '*'
-          }
-        ],
-        body: {
-          control: ';;&',
-          value: [
+        type: 'case',
+        selection: {
+          type: 'literal',
+          value: 'foo'
+        },
+        optionList: [{
+          type: 'caseOption',
+          patternList: [
             {
-              type: 'command',
-              command: {
-                type: 'literal',
-                value: 'echo'
-              },
-              args: [
-                {
+              type: 'glob',
+              value: '*'
+            }
+          ],
+          body: {
+            control: ';;',
+            value: [
+              {
+                type: 'command',
+                command: {
                   type: 'literal',
-                  value: 'baz'
-                }
-              ],
-              redirects: [],
-              env: {},
-              control: ';',
-              next: null
-            },
-          ]
-        }
-      },
+                  value: 'echo'
+                },
+                args: [
+                  {
+                    type: 'literal',
+                    value: 'bar'
+                  }
+                ],
+                redirects: [],
+                env: {},
+                control: '&',
+                next: null
+              },
+            ]
+          }
+        }],
+        control: ';',
+        next: null
+      }
+    );
+    done();
+  });
+  it("parses a ;;& case control operator", (done) => {
+    expect(parse('case foo in *) echo baz;;& esac')[0]).to.deep.equal(
       {
-        type: 'caseOption',
-        patternList: [
-          {
-            type: 'glob',
-            value: '*'
-          }
-        ],
-        body: {
-          control: ';&',
-          value: [
+        type: 'case',
+        selection: {
+          type: 'literal',
+          value: 'foo'
+        },
+        optionList: [{
+          type: 'caseOption',
+          patternList: [
             {
-              type: 'command',
-              command: {
-                type: 'literal',
-                value: 'echo'
-              },
-              args: [
-                {
+              type: 'glob',
+              value: '*'
+            }
+          ],
+          body: {
+            control: ';;&',
+            value: [
+              {
+                type: 'command',
+                command: {
                   type: 'literal',
-                  value: 'foo'
-                }
-              ],
-              redirects: [],
-              env: {},
-              control: ';',
-              next: null
-            },
-          ]
-        }
-      }],
-    control: ';',
-    next: null
-  }
-
-  var actual = parse('case foo in c | d) more_stuff;; [yY] | [Nn][oO] ) bracket_expression; * ) echo bar & ;; *) echo baz;;& * ) echo foo;& esac')[0]
-
-  t.deepEqual(actual, expected)
-  t.end()
-})
-
+                  value: 'echo'
+                },
+                args: [
+                  {
+                    type: 'literal',
+                    value: 'baz'
+                  }
+                ],
+                redirects: [],
+                env: {},
+                control: ';',
+                next: null
+              },
+            ]
+          }
+        }],
+        control: ';',
+        next: null
+      }
+    );
+    done();
+  });
+  it("parses a ;& case control operator", (done) => {
+    expect(parse('case foo in * ) echo foo;& esac')[0]).to.deep.equal(
+      {
+        type: 'case',
+        selection: {
+          type: 'literal',
+          value: 'foo'
+        },
+        optionList: [{
+          type: 'caseOption',
+          patternList: [
+            {
+              type: 'glob',
+              value: '*'
+            }
+          ],
+          body: {
+            control: ';&',
+            value: [
+              {
+                type: 'command',
+                command: {
+                  type: 'literal',
+                  value: 'echo'
+                },
+                args: [
+                  {
+                    type: 'literal',
+                    value: 'foo'
+                  }
+                ],
+                redirects: [],
+                env: {},
+                control: ';',
+                next: null
+              },
+            ]
+          }
+        }],
+        control: ';',
+        next: null
+      }
+    );
+    done();
+  });
+});

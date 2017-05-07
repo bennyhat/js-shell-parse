@@ -1,8 +1,8 @@
-var test = require('tape')
-var parse = require('../parser')
+var expect = require('chai').expect;
+var parse = require('../parser');
 
-test('flow control operators', function (t) {
-  var expect = [
+describe("flow control operators", () => {
+  let expectedCommandList = [
     {
       type: 'command',
       command: { type: 'literal', value: 'echo' },
@@ -27,50 +27,17 @@ test('flow control operators', function (t) {
     },
   ];
 
-  t.deepEqual(parse('echo ok;echo ok2;'), expect,
-              'can separate commands with ";"')
-
-  t.deepEqual(parse('echo ok\necho ok2\n'), expect,
-              'can separate commands with "\\n"')
-
-  expect[0].control = '&'
-  t.deepEqual(parse('echo ok & echo ok2;'), expect,
-              'can separate commands with "&"')
-
-  t.end()
-})
-
-test('command chaining', function (t) {
-  var expect = [
-    {
-      type: 'command',
-      command: { type: 'literal', value: 'echo' },
-      args: [
-        { type: 'literal', value: 'ok' }
-      ],
-      redirects: [],
-      env: {},
-      control: '&&',
-      next: {
-        type: 'command',
-        command: { type: 'literal', value: 'echo' },
-        args: [
-          { type: 'literal', value: 'ok2' }
-        ],
-        redirects: [],
-        env: {},
-        control: ';',
-        next: null
-      }
-    }
-  ];
-
-  ['&&', '||'].forEach(function (operator) {
-    expect[0].control = operator
-    var ast = parse('echo ok ' + operator + ' echo ok2\n')
-    t.deepEqual(ast, expect, 'can chain commands with ' + operator)
-  })
-
-  t.end()
-})
-
+  it("parses and separates command with ;", (done) => {
+    expect(parse('echo ok;echo ok2;')).to.deep.equal(expectedCommandList);
+    done();
+  });
+  it("parses and separates command with \\n", (done) => {
+    expect(parse('echo ok\necho ok2\n')).to.deep.equal(expectedCommandList);
+    done();
+  });
+  it("parses and separates command with &", (done) => {
+    expectedCommandList[0].control = '&';
+    expect(parse('echo ok & echo ok2;')).to.deep.equal(expectedCommandList);
+    done();
+  });
+});

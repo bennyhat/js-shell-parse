@@ -1,37 +1,40 @@
-var test = require('tape')
-var parse = require('../parser')
+var expect = require('chai').expect;
+var parse = require('../parser');
 
-test('long example', function (t) {
-  t.deepEqual(parse("first | second"), [
-    {
-      "type": "command",
-      "command": {
-        "type": "literal",
-        "value": "first"
-      },
-      "args": [],
-      "redirects": [
+describe("pipes", () => {
+  it("parses pipe operators as redirects", (done) => {
+    expect(parse("first | second")).to.deep.equal(
+      [
         {
-          "type": "pipe",
+          "type": "command",
           "command": {
-            "type": "command",
-            "command": {
-              "type": "literal",
-              "value": "second"
-            },
-            "args": [],
-            "redirects": [],
-            "env": {},
-            "control": ";",
-            "next": null
-          }
-        }
-      ],
-      "env": {},
-      "control": ";",
-      "next": null
-    },
-  ], "pipe operators are treated as redirects")
-
-  t.end()
-})
+            "type": "literal",
+            "value": "first"
+          },
+          "args": [],
+          "redirects": [
+            {
+              "type": "pipe",
+              "command": {
+                "type": "command",
+                "command": {
+                  "type": "literal",
+                  "value": "second"
+                },
+                "args": [],
+                "redirects": [],
+                "env": {},
+                "control": ";",
+                "next": null
+              }
+            }
+          ],
+          "env": {},
+          "control": ";",
+          "next": null
+        },
+      ]
+    );
+    done();
+  });
+});

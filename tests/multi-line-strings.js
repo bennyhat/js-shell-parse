@@ -1,18 +1,19 @@
-var test = require('tape')
-var parse = require('../parser')
+var expect = require('chai').expect;
+var parse = require('../parser');
 
-test('Multi-line strings', function (t) {
-  var input = [
-    '"This',
-    'is a',
-    'multiline',
-    'string"'
-  ].join('\n')
+describe("multi-line strings", () => {
+  it("parses multi-line strings as one argument", (done) => {
+    let multiline = `"This
+is a
+multiline
+string"`;
 
-  var arg = parse(input, 'argument')
-  t.deepEqual(arg, {
-    type: 'literal',
-    value: 'This\nis a\nmultiline\nstring'
-  }, 'multi-line string literals are one argument')
-  t.end()
-})
+    expect(parse(multiline, 'argument')).to.deep.equal(
+      {
+        type: 'literal',
+        value: 'This\nis a\nmultiline\nstring'
+      }
+    );
+    done();
+  });
+});

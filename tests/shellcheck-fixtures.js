@@ -1,67 +1,74 @@
-var test = require('tape')
-var parse = require('../parser')
+let expect = require('chai').expect;
+let parse = require('../parser');
+let unroll = require('unroll');
+unroll.use(it);
 
-var fs = require('fs')
-var path = require('path')
+let path = require('path');
+let fs = require('fs');
+let fixturesDirectory = path.join(__dirname, 'fixtures/shellcheck-tests')
+let fixturesToUnroll = generateFixturesToUnroll(fixturesDirectory);
 
-var fixturesDir = path.join(__dirname, 'fixtures/shellcheck-tests')
-var fixtureDirs = fs.readdirSync(fixturesDir).map(function (dir) {
-  return path.join(fixturesDir, dir)
-})
-
-test('shellcheck fixtures', function(t) {
-  // allow skipping fixtures entirely
-  if (process.env.skip_shellcheck_fixtures) {
-    t.skip('skipping shellcheck fixture tests')
-    t.end()
-    return
-  }
-  // allow running individual fixtures directly
-  if (process.argv[1].match(/shellcheck-fixtures\.js$/)
-      && process.argv.length > 2) {
-    fixtureDirs = process.argv.slice(2)
-  }
-
-  t.plan(fixtureDirs.length)
-  fixtureDirs.forEach(function (fixtureDir) {
-    var source = fs.readFileSync(path.join(fixtureDir, 'source.sh'), 'utf8')
-
-    var error, ast;
-    try { error = require(path.join(fixtureDir, 'error.json')) } catch (e) {}
-    if (!error) {
-      try { ast = require(path.join(fixtureDir, 'ast.json')) } catch (e) {}
-    }
-
-    if (error) {
-      t.throws(function() {
-        parse(source)
-      }, error.message ? new RegExp(error.message) : undefined, fixtureDir + ' errored')
-    } else if (ast) {
-      t.deepEqual(parse(source), ast, dir)
-    } else {
+describe("shell checks", () => {
+  unroll('parses #source',
+    (done, testArgs) => {
+      let source = fs.readFileSync(testArgs['source'], 'utf8');
+      let error = undefined;
+      let ast = undefined;
       try {
-        parse(source)
-        t.pass(fixtureDir.replace(fixturesDir + '/', '') + ': parsed sucessfully')
+        error = require(testArgs['error'])
       } catch (e) {
-        if (e instanceof parse.SyntaxError) {
-          t.fail('parse failed')
-          formatParseError(fixtureDir, source, e)
-        } else {
+      }
+      try {
+        ast = require(testArgs['ast'])
+      } catch (e) {
+      }
+
+      if (error) {
+        let syntaxFailure = () => {
+          parse(source)
+        };
+        expect(syntaxFailure).to.throw('message' in error ? new RegExp(error.message) : /SyntaxError/);
+      }
+      else if (ast) {
+        expect(parse(source)).to.deep.equal(ast);
+      }
+      else {
+        try {
+          expect(parse(source)).to.not.equal(null);
+        } catch (e) {
+          if (e instanceof parse.SyntaxError) {
+            formatParseError(testArgs['source'], source, e)
+          }
           throw e
         }
       }
-    }
+      done();
+    },
+    fixturesToUnroll
+  );
+});
 
-  })
-  t.end()
+function generateFixturesToUnroll(fixturesDirectory) {
+  let glob = require("glob");
 
-})
+  let shellCheckList = glob.sync(fixturesDirectory + '/**/source.sh');
+  let sourcePathList = ['source'].concat(shellCheckList);
+  let astPathList = ['ast'].concat(shellCheckList.map((sourcePath) => {
+    return sourcePath.replace('source.sh', 'ast.json');
+  }));
+  let errorPathList = ['error'].concat(shellCheckList.map((sourcePath) => {
+    return sourcePath.replace('source.sh', 'error.json');
+  }));
+  return sourcePathList.map((element, index) => {
+    return [element, astPathList[index], errorPathList[index]];
+  });
+}
 
-function formatParseError (dir, source, err) {
-  var msg = dir.replace(fixturesDir + '/', '') + ': ' + err.message
-  var start = Math.max(0, err.location.start.offset - 8)
-  msg += '\n  ' + source.slice(start, start + 10).trim() + '\n'
-  for (var i = 0; i <= (err.column - start); i++) msg += '-';
-  msg += '^'
-  console.error(msg)
+function formatParseError(sourcePath, source, err) {
+  let message = sourcePath.replace(fixturesDirectory,'') + ': ' + err.message
+  let start = Math.max(0, err.location.start.offset - 8);
+  message += '\n  ' + source.slice(start, start + 10).trim() + '\n';
+  for (let i = 0; i <= (err.column - start); i++) message += '-';
+  message += '^';
+  console.error(message)
 }

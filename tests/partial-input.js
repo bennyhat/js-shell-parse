@@ -1,32 +1,52 @@
-var test = require('tape')
-var parse = require('../parser')
+var expect = require('chai').expect;
+var parse = require('../parser');
+var unroll = require('unroll');
+unroll.use(it);
 
-test('partial input', function (t) {
-  // These should all produce syntax errors at the end of the input
-  var inputs = [
-    "echo '",
-    'echo "',
-    'echo `start',
-    'echo $(',
-    'echo ${',
-    'if',
-    'while',
-    'until',
-  ];
-  t.plan(inputs.length * 2)
-  inputs.forEach(function (input) {
-    try {
-      parse(input)
-      t.fail('parse(' + JSON.stringify(input) + ') parsed successfully when it should have thrown a SyntaxError')
-    } catch (errTop) {
-      t.equal(errTop.constructor, parse.SyntaxError, 'got a SyntaxError')
+describe("partial input", () => {
+  unroll('fails to parse #input',
+    (done, testArgs) => {
+      let syntaxFailure = () => {
+        parse(testArgs['input'])
+      };
+      expect(syntaxFailure).to.throw(/SyntaxError/);
+      done();
+    },
+    [
+      ['input'],
+      ["echo '"],
+      ['echo "'],
+      ['echo `start'],
+      ['echo $('],
+      ['echo ${'],
+      ['if'],
+      ['while'],
+      ['until']
+    ]
+  );
+  unroll('parses continuation of #input',
+    (done, testArgs) => {
       try {
-        var cont = input.slice(errTop.location.start.offset)
-        parse(cont, 'continuationStart')
-        t.pass(JSON.stringify(cont) + ' is a continuationStart')
-      } catch (errCont) {
-        t.fail(JSON.stringify(cont) + ' is not a continuationStart ' + errTop + ' ' + errCont)
+        parse(testArgs['input'])
+      } catch (err) {
+        let continuation = testArgs['input'].slice(err.location.start.offset);
+        let syntaxPass = () => {
+          parse(continuation, 'continuationStart');
+        };
+        expect(syntaxPass).to.not.throw(/SyntaxError/);
+        done();
       }
-    }
-  })
-})
+    },
+    [
+      ['input'],
+      ["echo '"],
+      ['echo "'],
+      ['echo `start'],
+      ['echo $('],
+      ['echo ${'],
+      ['if'],
+      ['while'],
+      ['until']
+    ]
+  );
+});
