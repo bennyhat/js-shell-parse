@@ -162,7 +162,6 @@ rules.casePatternExpression = function (concatenation, pipe) {
 }
 
 rules.casePatternBracketExpression = function (concatenation, pipe) {
-  concatenation.value = concatenation.value.replace(/([^\\])]/g,'$1')
   return {
     type: 'bracketExpression',
     value: concatenation,
@@ -291,20 +290,28 @@ rules.variableAssignment = function (name, value) {
 
 rules.writableVariableName = function () { return text() }
 
-rules.bareword = function (cs) { return literal(cs) }
+function extractBareword(cs) {
+  return literal(cs)
+}
+rules.caseBareword = extractBareword;
+rules.bareword = extractBareword;
 
-rules.glob = function (cs) {
+function extractGlob(cs) {
   return {
     type: 'glob',
     value: text()
   }
 }
+rules.caseGlob = extractGlob;
+rules.glob = extractGlob;
 
 rules.escapedMetaChar = function (character) { return character }
 
-rules.concatenation = function (pieces) {
-  return flattenConcatenation(pieces)
+function extractConcatenation(pieces) {
+  return flattenConcatenation(pieces);
 }
+rules.concatenation = extractConcatenation;
+rules.casePatternConcatenation = extractConcatenation;
 
 rules.singleQuote = function (inner) { return literal(inner) }
 

@@ -241,4 +241,56 @@ describe("case condition - complex", () => {
     );
     done();
   });
+  it("parses and correctly concatenates brackets in pattern", (done) => {
+    expect(parse('case foo in [aA]*) echo foo;& esac')[0]).to.deep.equal(
+      {
+        type: 'case',
+        selection: {
+          type: 'literal',
+          value: 'foo'
+        },
+        optionList: [{
+          type: 'caseOption',
+          patternList: [
+            {
+              type: 'bracketExpression',
+              value: {
+                "type": "literal",
+                "value": "aA"
+              }
+            },
+            {
+              type: 'glob',
+              value: '*'
+            }
+          ],
+          body: {
+            control: ';&',
+            value: [
+              {
+                type: 'command',
+                command: {
+                  type: 'literal',
+                  value: 'echo'
+                },
+                args: [
+                  {
+                    type: 'literal',
+                    value: 'foo'
+                  }
+                ],
+                redirects: [],
+                env: {},
+                control: ';',
+                next: null
+              },
+            ]
+          }
+        }],
+        control: ';',
+        next: null
+      }
+    );
+    done();
+  });
 });

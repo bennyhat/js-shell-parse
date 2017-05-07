@@ -126,13 +126,13 @@ caseOption "a case option"
  = "("? patternList:casePattern+ space* ")" body:caseBody spaceNL*
 
 casePattern "a case pattern"
- = casePatternExpression / casePatternBracketExpression
+ = casePatternBracketExpression / casePatternExpression
 
 casePatternExpression
  = concatenation:concatenation space? pipe:"|"? space?
 
 casePatternBracketExpression
- = "["? concatenation:concatenation space? pipe:"|"? space?
+ = "[" concatenation:casePatternConcatenation "]" space? pipe:"|"? space?
 
 caseBody "a case body"
  = statementList:caseStatement+ control:caseControlOperator?
@@ -140,15 +140,36 @@ caseBody "a case body"
 caseStatement
  = spaceNL* statement:statement control:controlOperator
 
+commonConcatenation
+ = environmentVariable
+ / variableSubstitution
+ / commandSubstitution
+ / singleQuote
+ / doubleQuote
+
+casePatternConcatenation "concatenation of strings and/or variables"
+ = pieces:( caseGlob
+          / caseBareword
+          / commonConcatenation
+          )+
+
 concatenation "concatenation of strings and/or variables"
  = pieces:( glob
           / bareword
-          / environmentVariable
-          / variableSubstitution
-          / commandSubstitution
-          / singleQuote
-          / doubleQuote
+          / commonConcatenation
           )+
+
+caseBareword
+ = !'#' cs:caseBarewordChar+
+
+caseBarewordChar
+= '\\' chr:caseBarewordMeta { return chr }
+/ !caseBarewordMeta chr:.   { return chr }
+
+caseBarewordMeta = [$"';&<>\n()\[\]*?|` ]
+
+caseGlob
+ = caseBareword* ('*' / '?' / characterRange / braceExpansion)+ caseBareword*
 
 bareword "bareword"
  = !'#' cs:barewordChar+
